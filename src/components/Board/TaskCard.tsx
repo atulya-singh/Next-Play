@@ -109,8 +109,8 @@ export function TaskCard({
       )}
 
       {task.labels.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {task.labels.map((label) => (
+        <div className="mt-2 flex flex-wrap items-center gap-1">
+          {task.labels.slice(0, 3).map((label) => (
             <span
               key={label.id}
               className="rounded-full px-2 py-0.5 text-[10px] font-medium"
@@ -122,6 +122,11 @@ export function TaskCard({
               {label.name}
             </span>
           ))}
+          {task.labels.length > 3 && (
+            <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-[#71717A]">
+              +{task.labels.length - 3} more
+            </span>
+          )}
         </div>
       )}
 
