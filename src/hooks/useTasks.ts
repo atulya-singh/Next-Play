@@ -41,9 +41,18 @@ export function useTasks() {
   }, [fetchTasks])
 
   const createTask = useCallback(
-    async (title: string, status: TaskStatus = 'todo', priority: TaskPriority = 'normal') => {
+    async (fields: {
+      title: string
+      status?: TaskStatus
+      priority?: TaskPriority
+      description?: string | null
+      due_date?: string | null
+      label_ids?: string[]
+    }) => {
       if (!user) return null
 
+      const status = fields.status ?? 'todo'
+      const priority = fields.priority ?? 'normal'
       const columnTasks = tasks.filter((t) => t.status === status)
       const maxPosition = columnTasks.length > 0
         ? Math.max(...columnTasks.map((t) => t.position))
@@ -52,7 +61,15 @@ export function useTasks() {
 
       const { data, error } = await supabase
         .from('tasks')
-        .insert({ title, status, priority, position, user_id: user.id })
+        .insert({
+          title: fields.title,
+          status,
+          priority,
+          position,
+          description: fields.description ?? null,
+          due_date: fields.due_date ?? null,
+          user_id: user.id,
+        })
         .select('*, task_labels(label_id, labels(*))')
         .single()
 
@@ -61,20 +78,24 @@ export function useTasks() {
         return null
       }
 
-      const created: Task = {
-        ...data,
-        labels: (data.task_labels ?? []).map(
-          (tl: { labels: Record<string, unknown> }) => tl.labels,
-        ),
+      if (fields.label_ids && fields.label_ids.length > 0) {
+        await supabase.from('task_labels').insert(
+          fields.label_ids.map((lid) => ({ task_id: data.id, label_id: lid })),
+        )
       }
-      setTasks((prev) => [...prev, created])
-      return created
+
+      await fetchTasks()
+      return data as Task
     },
-    [user, tasks],
+    [user, tasks, fetchTasks],
   )
 
   const updateTask = useCallback(
-    async (taskId: string, updates: Partial<Pick<Task, 'title' | 'description' | 'priority' | 'due_date' | 'status'>>) => {
+    async (
+      taskId: string,
+      updates: Partial<Pick<Task, 'title' | 'description' | 'priority' | 'due_date' | 'status'>>,
+      label_ids?: string[],
+    ) => {
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t)),
       )
@@ -86,6 +107,17 @@ export function useTasks() {
 
       if (error) {
         console.error('Failed to update task:', error)
+        await fetchTasks()
+        return
+      }
+
+      if (label_ids !== undefined) {
+        await supabase.from('task_labels').delete().eq('task_id', taskId)
+        if (label_ids.length > 0) {
+          await supabase.from('task_labels').insert(
+            label_ids.map((lid) => ({ task_id: taskId, label_id: lid })),
+          )
+        }
         await fetchTasks()
       }
     },
