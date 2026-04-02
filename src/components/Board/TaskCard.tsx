@@ -85,6 +85,7 @@ export function TaskCard({
         'hover:bg-[#222226] hover:-translate-y-[1px]',
         'hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]',
         isOverlay && 'rotate-[2deg] shadow-[0_8px_24px_rgba(0,0,0,0.5)]',
+        !isOverlay && !isDragging && 'animate-card-in',
       )}
     >
       <div className="flex items-start justify-between gap-2">
