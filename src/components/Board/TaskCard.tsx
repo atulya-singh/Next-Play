@@ -1,5 +1,7 @@
 import { GripVertical, Clock, AlertTriangle } from 'lucide-react'
 import { format, isPast, differenceInDays, parseISO } from 'date-fns'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 import type { Task } from '@/types'
 
@@ -41,17 +43,43 @@ function DueDateBadge({ dueDate }: { dueDate: string }) {
   )
 }
 
-export function TaskCard({ task }: { task: Task }) {
+export function TaskCard({
+  task,
+  isOverlay,
+}: {
+  task: Task
+  isOverlay?: boolean
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: task.id,
+    data: { task },
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : undefined,
+  }
+
   const priority = priorityConfig[task.priority]
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={cn(
         'group rounded-lg border border-[#2A2A2E] bg-[#1C1C1F] p-3',
         'transition-all duration-150',
         'hover:bg-[#222226] hover:-translate-y-[1px]',
         'hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]',
-        'cursor-grab active:cursor-grabbing',
+        isOverlay && 'rotate-[2deg] shadow-[0_8px_24px_rgba(0,0,0,0.5)]',
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -96,10 +124,16 @@ export function TaskCard({ task }: { task: Task }) {
         <span className="text-[11px] text-[#71717A]">
           {format(parseISO(task.created_at), 'MMM d')}
         </span>
-        <GripVertical
-          size={14}
-          className="text-[#71717A] opacity-0 transition-opacity group-hover:opacity-100"
-        />
+        <button
+          className="cursor-grab touch-none active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical
+            size={14}
+            className="text-[#71717A] opacity-0 transition-opacity group-hover:opacity-100"
+          />
+        </button>
       </div>
     </div>
   )

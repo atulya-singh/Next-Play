@@ -1,16 +1,28 @@
 import { Inbox } from 'lucide-react'
-import type { Task } from '@/types'
+import { useDroppable } from '@dnd-kit/core'
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import type { Task, TaskStatus } from '@/types'
 import type { ReactNode } from 'react'
 
 interface ColumnProps {
+  id: TaskStatus
   title: string
   tasks: Task[]
   children: ReactNode
 }
 
-export function Column({ title, tasks, children }: ColumnProps) {
+export function Column({ id, title, tasks, children }: ColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({ id })
+
   return (
-    <div className="flex h-full w-72 shrink-0 flex-col rounded-xl bg-[#141416]">
+    <div
+      className={`flex h-full w-72 shrink-0 flex-col rounded-xl bg-[#141416] transition-colors ${
+        isOver ? 'ring-1 ring-[#7C3AED]/40' : ''
+      }`}
+    >
       <div className="flex items-center gap-2 px-3 py-3">
         <div className="h-4 w-0.5 rounded-full bg-[#7C3AED]" />
         <h2 className="text-[13px] font-semibold text-[#F1F1F3]">{title}</h2>
@@ -19,16 +31,25 @@ export function Column({ title, tasks, children }: ColumnProps) {
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
-        {tasks.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8">
-            <Inbox size={24} className="text-[#71717A]" />
-            <span className="text-[13px] text-[#71717A]">No tasks yet</span>
-          </div>
-        ) : (
-          children
-        )}
-      </div>
+      <SortableContext
+        id={id}
+        items={tasks.map((t) => t.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div
+          ref={setNodeRef}
+          className="flex flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2"
+        >
+          {tasks.length === 0 ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8">
+              <Inbox size={24} className="text-[#71717A]" />
+              <span className="text-[13px] text-[#71717A]">No tasks yet</span>
+            </div>
+          ) : (
+            children
+          )}
+        </div>
+      </SortableContext>
     </div>
   )
 }
