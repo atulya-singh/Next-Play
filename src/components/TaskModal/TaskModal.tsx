@@ -108,7 +108,7 @@ export function TaskModal({ open, onClose, defaultStatus, editTask }: TaskModalP
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/50"
+        className="fixed inset-0 z-40 bg-black/50 animate-backdrop-in"
         onClick={onClose}
       />
 
@@ -118,7 +118,7 @@ export function TaskModal({ open, onClose, defaultStatus, editTask }: TaskModalP
           'fixed inset-y-0 right-0 z-50 flex w-full flex-col',
           'border-l border-[#2A2A2E] bg-[#141416]',
           'sm:w-[420px]',
-          'animate-in slide-in-from-right duration-200',
+          'animate-drawer-in',
         )}
       >
         {/* Header */}
