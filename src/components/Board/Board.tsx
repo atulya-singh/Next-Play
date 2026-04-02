@@ -14,6 +14,7 @@ import { useTasks } from '@/hooks/useTasks'
 import { getPositionBetween } from '@/lib/utils'
 import { Column } from './Column'
 import { TaskCard } from './TaskCard'
+import { TaskModal } from '@/components/TaskModal/TaskModal'
 import type { Column as ColumnType, Task, TaskStatus } from '@/types'
 
 const columns: { id: TaskStatus; title: string }[] = [
@@ -84,6 +85,11 @@ export function Board() {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [toast, setToast] = useState<string | null>(null)
 
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalStatus, setModalStatus] = useState<TaskStatus>('todo')
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   )
@@ -94,6 +100,18 @@ export function Board() {
       .filter((t) => t.status === col.id)
       .sort((a, b) => a.position - b.position),
   }))
+
+  const openNewTask = useCallback((status: TaskStatus) => {
+    setEditingTask(null)
+    setModalStatus(status)
+    setModalOpen(true)
+  }, [])
+
+  const openEditTask = useCallback((task: Task) => {
+    setEditingTask(task)
+    setModalStatus(task.status)
+    setModalOpen(true)
+  }, [])
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const task = event.active.data.current?.task as Task | undefined
@@ -177,9 +195,14 @@ export function Board() {
               id={col.id}
               title={col.title}
               tasks={col.tasks}
+              onNewTask={() => openNewTask(col.id)}
             >
               {col.tasks.map((task) => (
-                <TaskCard key={task.id} task={task} />
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onClick={() => openEditTask(task)}
+                />
               ))}
             </Column>
           ))}
@@ -189,6 +212,13 @@ export function Board() {
           {activeTask ? <TaskCard task={activeTask} isOverlay /> : null}
         </DragOverlay>
       </DndContext>
+
+      <TaskModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        defaultStatus={modalStatus}
+        editTask={editingTask}
+      />
 
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
     </>

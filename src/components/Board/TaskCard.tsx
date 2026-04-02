@@ -46,9 +46,11 @@ function DueDateBadge({ dueDate }: { dueDate: string }) {
 export function TaskCard({
   task,
   isOverlay,
+  onClick,
 }: {
   task: Task
   isOverlay?: boolean
+  onClick?: () => void
 }) {
   const {
     attributes,
@@ -74,6 +76,9 @@ export function TaskCard({
     <div
       ref={setNodeRef}
       style={style}
+      onClick={() => {
+        if (!isDragging && onClick) onClick()
+      }}
       className={cn(
         'group rounded-lg border border-[#2A2A2E] bg-[#1C1C1F] p-3',
         'transition-all duration-150',

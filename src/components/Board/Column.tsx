@@ -1,4 +1,4 @@
-import { Inbox } from 'lucide-react'
+import { Inbox, Plus } from 'lucide-react'
 import { useDroppable } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -12,9 +12,10 @@ interface ColumnProps {
   title: string
   tasks: Task[]
   children: ReactNode
+  onNewTask: () => void
 }
 
-export function Column({ id, title, tasks, children }: ColumnProps) {
+export function Column({ id, title, tasks, children, onNewTask }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
 
   return (
@@ -26,9 +27,15 @@ export function Column({ id, title, tasks, children }: ColumnProps) {
       <div className="flex items-center gap-2 px-3 py-3">
         <div className="h-4 w-0.5 rounded-full bg-[#7C3AED]" />
         <h2 className="text-[13px] font-semibold text-[#F1F1F3]">{title}</h2>
-        <span className="ml-auto rounded-full bg-[#7C3AED]/15 px-2 py-0.5 text-[11px] font-medium text-[#7C3AED]">
+        <span className="rounded-full bg-[#7C3AED]/15 px-2 py-0.5 text-[11px] font-medium text-[#7C3AED]">
           {tasks.length}
         </span>
+        <button
+          onClick={onNewTask}
+          className="ml-auto rounded p-1 text-[#71717A] hover:bg-[#1C1C1F] hover:text-[#F1F1F3] transition-colors"
+        >
+          <Plus size={14} />
+        </button>
       </div>
 
       <SortableContext
