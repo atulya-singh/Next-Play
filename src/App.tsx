@@ -15,11 +15,6 @@ function App() {
 
   return (
     <div className="flex h-screen flex-col bg-[#0D0D0F]">
-      <header className="flex items-center border-b border-[#2A2A2E] px-6 py-3">
-        <h1 className="text-base font-semibold text-[#F1F1F3]">
-          Kanban Board
-        </h1>
-      </header>
       <Board />
     </div>
   )

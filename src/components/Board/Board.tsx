@@ -15,7 +15,8 @@ import { getPositionBetween } from '@/lib/utils'
 import { Column } from './Column'
 import { TaskCard } from './TaskCard'
 import { TaskModal } from '@/components/TaskModal/TaskModal'
-import type { Column as ColumnType, Task, TaskStatus } from '@/types'
+import { Header } from '@/components/Header/Header'
+import type { Column as ColumnType, Task, TaskPriority, TaskStatus } from '@/types'
 
 const columns: { id: TaskStatus; title: string }[] = [
   { id: 'todo', title: 'To Do' },
@@ -84,6 +85,8 @@ export function Board() {
   const { tasks, loading, moveTask } = useTasks()
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [filterText, setFilterText] = useState('')
+  const [filterPriority, setFilterPriority] = useState<TaskPriority | 'all'>('all')
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false)
@@ -99,6 +102,17 @@ export function Board() {
     tasks: tasks
       .filter((t) => t.status === col.id)
       .sort((a, b) => a.position - b.position),
+  }))
+
+  const isFiltered = filterText !== '' || filterPriority !== 'all'
+
+  const filteredColumns: ColumnType[] = boardColumns.map((col) => ({
+    ...col,
+    tasks: col.tasks.filter((task) => {
+      if (filterText && !task.title.toLowerCase().includes(filterText.toLowerCase())) return false
+      if (filterPriority !== 'all' && task.priority !== filterPriority) return false
+      return true
+    }),
   }))
 
   const openNewTask = useCallback((status: TaskStatus) => {
@@ -181,6 +195,14 @@ export function Board() {
 
   return (
     <>
+      <Header
+        tasks={tasks}
+        filterText={filterText}
+        onFilterTextChange={setFilterText}
+        filterPriority={filterPriority}
+        onFilterPriorityChange={setFilterPriority}
+        onNewTask={() => openNewTask('todo')}
+      />
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -189,12 +211,13 @@ export function Board() {
         onDragEnd={handleDragEnd}
       >
         <div className="flex flex-1 gap-4 overflow-x-auto px-6 py-4">
-          {boardColumns.map((col) => (
+          {filteredColumns.map((col) => (
             <Column
               key={col.id}
               id={col.id}
               title={col.title}
               tasks={col.tasks}
+              isFiltered={isFiltered}
               onNewTask={() => openNewTask(col.id)}
             >
               {col.tasks.map((task) => (
