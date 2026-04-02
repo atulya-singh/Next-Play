@@ -1,0 +1,138 @@
+import { useCallback, useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from './useAuth'
+import type { Task, TaskPriority, TaskStatus } from '@/types'
+
+export function useTasks() {
+  const { user } = useAuth()
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchTasks = useCallback(async () => {
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*, task_labels(label_id, labels(*))')
+      .eq('user_id', user.id)
+      .order('position', { ascending: true })
+
+    if (error) {
+      console.error('Failed to fetch tasks:', error)
+      setError(error.message)
+    } else {
+      const mapped = (data ?? []).map((row) => ({
+        ...row,
+        labels: (row.task_labels ?? []).map(
+          (tl: { labels: Record<string, unknown> }) => tl.labels,
+        ),
+        task_labels: undefined,
+      })) as Task[]
+      setTasks(mapped)
+      setError(null)
+    }
+
+    setLoading(false)
+  }, [user])
+
+  useEffect(() => {
+    fetchTasks()
+  }, [fetchTasks])
+
+  const createTask = useCallback(
+    async (title: string, status: TaskStatus = 'todo', priority: TaskPriority = 'normal') => {
+      if (!user) return null
+
+      const columnTasks = tasks.filter((t) => t.status === status)
+      const maxPosition = columnTasks.length > 0
+        ? Math.max(...columnTasks.map((t) => t.position))
+        : 0
+      const position = maxPosition + 1
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({ title, status, priority, position, user_id: user.id })
+        .select('*, task_labels(label_id, labels(*))')
+        .single()
+
+      if (error) {
+        console.error('Failed to create task:', error)
+        return null
+      }
+
+      const created: Task = {
+        ...data,
+        labels: (data.task_labels ?? []).map(
+          (tl: { labels: Record<string, unknown> }) => tl.labels,
+        ),
+      }
+      setTasks((prev) => [...prev, created])
+      return created
+    },
+    [user, tasks],
+  )
+
+  const updateTask = useCallback(
+    async (taskId: string, updates: Partial<Pick<Task, 'title' | 'description' | 'priority' | 'due_date' | 'status'>>) => {
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t)),
+      )
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', taskId)
+
+      if (error) {
+        console.error('Failed to update task:', error)
+        await fetchTasks()
+      }
+    },
+    [fetchTasks],
+  )
+
+  const deleteTask = useCallback(
+    async (taskId: string) => {
+      const prev = tasks
+      setTasks((t) => t.filter((task) => task.id !== taskId))
+
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+
+      if (error) {
+        console.error('Failed to delete task:', error)
+        setTasks(prev)
+      }
+    },
+    [tasks],
+  )
+
+  const moveTask = useCallback(
+    async (taskId: string, newStatus: TaskStatus, newPosition: number) => {
+      const prev = tasks
+      setTasks((t) =>
+        t.map((task) =>
+          task.id === taskId
+            ? { ...task, status: newStatus, position: newPosition }
+            : task,
+        ),
+      )
+
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: newStatus, position: newPosition })
+        .eq('id', taskId)
+
+      if (error) {
+        console.error('Failed to move task:', error)
+        setTasks(prev)
+      }
+    },
+    [tasks],
+  )
+
+  return { tasks, loading, error, createTask, updateTask, deleteTask, moveTask }
+}
