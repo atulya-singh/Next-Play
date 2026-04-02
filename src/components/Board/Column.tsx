@@ -1,11 +1,19 @@
-import { Inbox, Plus } from 'lucide-react'
+import { CircleDot, Clock, Eye, CheckCircle2, Plus } from 'lucide-react'
 import { useDroppable } from '@dnd-kit/core'
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
+import { cn } from '@/lib/utils'
 import type { Task, TaskStatus } from '@/types'
 import type { ReactNode } from 'react'
+
+const statusIcons: Record<TaskStatus, typeof CircleDot> = {
+  todo: CircleDot,
+  in_progress: Clock,
+  in_review: Eye,
+  done: CheckCircle2,
+}
 
 interface ColumnProps {
   id: TaskStatus
@@ -18,12 +26,15 @@ interface ColumnProps {
 
 export function Column({ id, title, tasks, children, isFiltered, onNewTask }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
+  const StatusIcon = statusIcons[id]
 
   return (
     <div
-      className={`flex h-full w-72 shrink-0 flex-col rounded-xl bg-[#141416] transition-colors ${
-        isOver ? 'ring-1 ring-[#7C3AED]/40' : ''
-      }`}
+      className={cn(
+        'flex h-full w-72 shrink-0 flex-col rounded-xl bg-[#141416] transition-all md:w-72',
+        'max-md:w-full max-md:shrink',
+        isOver && 'shadow-[inset_3px_0_0_0_#7C3AED,0_0_16px_-4px_rgba(124,58,237,0.25)]',
+      )}
     >
       <div className="flex items-center gap-2 px-3 py-3">
         <div className="h-4 w-0.5 rounded-full bg-[#7C3AED]" />
@@ -50,8 +61,10 @@ export function Column({ id, title, tasks, children, isFiltered, onNewTask }: Co
         >
           {tasks.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8">
-              <Inbox size={24} className="text-[#71717A]" />
-              <span className="text-[13px] text-[#71717A]">No tasks yet</span>
+              <StatusIcon size={24} className="text-[#71717A]" />
+              <span className="text-center text-[13px] text-[#71717A]">
+                Drop tasks here or click + to add one
+              </span>
             </div>
           ) : (
             children
