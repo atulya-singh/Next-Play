@@ -111,7 +111,7 @@ export function useTasks() {
   )
 
   const moveTask = useCallback(
-    async (taskId: string, newStatus: TaskStatus, newPosition: number) => {
+    async (taskId: string, newStatus: TaskStatus, newPosition: number): Promise<boolean> => {
       const prev = tasks
       setTasks((t) =>
         t.map((task) =>
@@ -129,7 +129,9 @@ export function useTasks() {
       if (error) {
         console.error('Failed to move task:', error)
         setTasks(prev)
+        return false
       }
+      return true
     },
     [tasks],
   )
