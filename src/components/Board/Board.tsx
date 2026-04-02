@@ -37,17 +37,18 @@ function SkeletonCard() {
 
 function LoadingSkeleton() {
   return (
-    <div className="flex gap-4 overflow-x-auto px-6 py-4">
+    <div className="flex flex-col gap-4 px-6 py-4 md:flex-row md:overflow-x-auto">
       {columns.map((col) => (
         <div
           key={col.id}
-          className="flex w-72 shrink-0 flex-col rounded-xl bg-[#141416]"
+          className="flex w-full shrink-0 flex-col rounded-xl bg-[#141416] md:w-72"
         >
           <div className="flex items-center gap-2 px-3 py-3">
             <div className="h-4 w-0.5 rounded-full bg-[#7C3AED]" />
             <div className="h-4 w-20 animate-pulse rounded bg-[#2A2A2E]" />
           </div>
           <div className="flex flex-col gap-2 px-2 pb-2">
+            <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
           </div>
@@ -210,7 +211,7 @@ export function Board() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-1 gap-4 overflow-x-auto px-6 py-4">
+        <div className="flex flex-1 flex-col gap-4 px-6 py-4 md:flex-row md:overflow-x-auto">
           {filteredColumns.map((col) => (
             <Column
               key={col.id}
