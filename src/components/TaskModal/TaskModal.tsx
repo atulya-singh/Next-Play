@@ -1,14 +1,10 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { X, Plus, Trash2 } from 'lucide-react'
+import { X, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTasks } from '@/hooks/useTasks'
 import { useLabels } from '@/hooks/useLabels'
+import { LabelPicker } from './LabelPicker'
 import type { Task, TaskPriority, TaskStatus } from '@/types'
-
-const LABEL_COLORS = [
-  '#EF4444', '#F59E0B', '#22C55E', '#3B82F6',
-  '#8B5CF6', '#EC4899', '#14B8A6', '#F97316',
-]
 
 interface TaskModalProps {
   open: boolean
@@ -30,11 +26,6 @@ export function TaskModal({ open, onClose, defaultStatus, editTask }: TaskModalP
   const [submitting, setSubmitting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  // New label inline form
-  const [showNewLabel, setShowNewLabel] = useState(false)
-  const [newLabelName, setNewLabelName] = useState('')
-  const [newLabelColor, setNewLabelColor] = useState(LABEL_COLORS[0])
-
   const isEdit = !!editTask
 
   useEffect(() => {
@@ -54,7 +45,6 @@ export function TaskModal({ open, onClose, defaultStatus, editTask }: TaskModalP
       }
       setTitleError('')
       setConfirmDelete(false)
-      setShowNewLabel(false)
     }
   }, [open, editTask])
 
@@ -110,17 +100,6 @@ export function TaskModal({ open, onClose, defaultStatus, editTask }: TaskModalP
         ? prev.filter((id) => id !== labelId)
         : [...prev, labelId],
     )
-  }
-
-  const handleCreateLabel = async () => {
-    const name = newLabelName.trim()
-    if (!name) return
-    const label = await createLabel(name, newLabelColor)
-    if (label) {
-      setSelectedLabelIds((prev) => [...prev, label.id])
-      setNewLabelName('')
-      setShowNewLabel(false)
-    }
   }
 
   if (!open) return null
@@ -233,82 +212,12 @@ export function TaskModal({ open, onClose, defaultStatus, editTask }: TaskModalP
               <label className="mb-1.5 block text-[12px] font-medium text-[#71717A]">
                 Labels
               </label>
-              <div className="flex flex-wrap gap-1.5">
-                {allLabels.map((label) => {
-                  const selected = selectedLabelIds.includes(label.id)
-                  return (
-                    <button
-                      key={label.id}
-                      type="button"
-                      onClick={() => toggleLabel(label.id)}
-                      className={cn(
-                        'rounded-full px-2.5 py-1 text-[11px] font-medium transition-all',
-                        selected
-                          ? 'ring-1 ring-offset-1 ring-offset-[#141416]'
-                          : 'opacity-50 hover:opacity-80',
-                      )}
-                      style={{
-                        backgroundColor: `${label.color}25`,
-                        color: label.color,
-                        ringColor: selected ? label.color : undefined,
-                      }}
-                    >
-                      {label.name}
-                    </button>
-                  )
-                })}
-                <button
-                  type="button"
-                  onClick={() => setShowNewLabel(!showNewLabel)}
-                  className="flex items-center gap-1 rounded-full border border-dashed border-[#2A2A2E] px-2.5 py-1 text-[11px] text-[#71717A] hover:border-[#7C3AED] hover:text-[#7C3AED] transition-colors"
-                >
-                  <Plus size={10} />
-                  New
-                </button>
-              </div>
-
-              {showNewLabel && (
-                <div className="mt-3 flex flex-col gap-2 rounded-lg border border-[#2A2A2E] bg-[#1C1C1F] p-3">
-                  <input
-                    type="text"
-                    value={newLabelName}
-                    onChange={(e) => setNewLabelName(e.target.value)}
-                    placeholder="Label name..."
-                    className="w-full rounded border border-[#2A2A2E] bg-[#141416] px-2.5 py-1.5 text-[12px] text-[#F1F1F3] placeholder:text-[#71717A] focus:outline-none focus:ring-1 focus:ring-[#7C3AED]"
-                    autoFocus
-                  />
-                  <div className="flex items-center gap-1.5">
-                    {LABEL_COLORS.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => setNewLabelColor(color)}
-                        className={cn(
-                          'h-5 w-5 rounded-full transition-transform',
-                          newLabelColor === color && 'scale-125 ring-1 ring-white/40',
-                        )}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={handleCreateLabel}
-                      className="rounded bg-[#7C3AED] px-3 py-1 text-[12px] font-medium text-white hover:bg-[#6D28D9] transition-colors"
-                    >
-                      Add
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowNewLabel(false)}
-                      className="rounded px-3 py-1 text-[12px] text-[#71717A] hover:text-[#F1F1F3] transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
+              <LabelPicker
+                allLabels={allLabels}
+                selectedLabelIds={selectedLabelIds}
+                onToggleLabel={toggleLabel}
+                onCreateLabel={createLabel}
+              />
             </div>
           </div>
 
